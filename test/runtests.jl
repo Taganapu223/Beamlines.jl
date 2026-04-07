@@ -836,6 +836,9 @@ using ForwardDiff, GTPSA, ReverseDiff
 
       @test (+DefExpr(()->L))() == +L
       @test (-DefExpr(()->L))() == -L
+
+      bl = Beamline(LineElement[], species_ref=Species("proton"), p_over_q_ref=DefExpr(() -> 123))
+      @test bl.p_over_q_ref == 123
     end
     ele = LineElement(x1_limit=123,
                       x2_limit=456,
