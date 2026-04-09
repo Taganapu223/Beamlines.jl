@@ -839,6 +839,10 @@ using ForwardDiff, GTPSA, ReverseDiff
 
       bl = Beamline(LineElement[], species_ref=Species("proton"), p_over_q_ref=DefExpr(() -> 123))
       @test bl.p_over_q_ref == 123
+
+      ele = LineElement(Kn1L = DefExpr(()->1))
+      @test ele.Kn2L == 0
+      @test one(DefExpr(()->2))() == 1
     end
     ele = LineElement(x1_limit=123,
                       x2_limit=456,
