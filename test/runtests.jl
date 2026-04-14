@@ -837,6 +837,13 @@ using YAML
 
       @test (+DefExpr(()->L))() == +L
       @test (-DefExpr(()->L))() == -L
+
+      bl = Beamline(LineElement[], species_ref=Species("proton"), p_over_q_ref=DefExpr(() -> 123))
+      @test bl.p_over_q_ref == 123
+
+      ele = LineElement(Kn1L = DefExpr(()->1))
+      @test ele.Kn2L == 0
+      @test one(DefExpr(()->2))() == 1
     end
     ele = LineElement(x1_limit=123,
                       x2_limit=456,
@@ -1309,9 +1316,13 @@ using YAML
       ele1.transport_map_params = (DefExpr(()->10*sin(a)), 100)
       @test Beamlines.deval(ele1.MapParams) ≈ MapParams(ele1.transport_map, (10*sin(1),100.))
     end
+
     # FourPotentialParams
-    f = (x,y,s,t)->(1,2,3,4)
-    g = (x,y,s,t)->(5,6,7,8)
+    f = (x,y,s,t)->((1,2,3,4), nothing)
+    g = (x,y,s,t)->((5,6,7,8), (9,  10, 11, -1,
+                                12, 13, 14, -2,
+                                15, 16, 17, -3,
+                                18, 19, 20, -4))
     ele1 = LineElement(four_potential=f)
     ele2 = LineElement(four_potential=f)
     @test !isnothing(ele1.FourPotentialParams)
@@ -1324,6 +1335,23 @@ using YAML
     @test ele1.FourPotentialParams isa FourPotentialParams{typeof(g)}
     @test ele1.four_potential == g
     @test ele2.four_potential == g
+    @test ele1 ≈ ele2
+    ele1.four_potential_normalized = true 
+    @test ele1.four_potential_normalized    
+    @test !ele2.four_potential_normalized
+    @test !(ele1 ≈ ele2)
+    @test ele1.four_potential_params == nothing
+    h = (x,y,s,t,p)->((p[1],p[2],p[3],p[4]), nothing)
+    ele1.four_potential = h
+    ele1.four_potential_params = [100, 200, 300, 400]
+    @test ele1.four_potential_params == [100, 200, 300, 400]
+    @test !(ele1 ≈ ele2)
+    ele2.four_potential = h
+    ele2.four_potential_params = [100, 200, 300, 500]
+    @test !(ele1 ≈ ele2)
+    ele2.four_potential_params = [100, 200, 300, 400]
+    @test !(ele1 ≈ ele2)
+    ele1.four_potential_normalized = false
     @test ele1 ≈ ele2
 
     # MetaParams
@@ -1411,6 +1439,27 @@ using YAML
     lat2 = Lattice([m2, q2])
     @test q2.species_ref == m2.species_ref
     @test lat2.beamlines[1].species_ref == lat2.beamlines[2].species_ref
+
+
+    # Deepcopy ignores BeamlineParams
+    ele = LineElement(Kn1=0.36, L=0.5, voltage=10)
+    bl = Beamline([ele])
+    ele2 = deepcopy(ele)
+    bl2 = Beamline([ele2])
+    @test ele2.Kn1 == ele.Kn1
+    @test ele2.L == ele.L
+    @test ele2.voltage == ele.voltage
+    @test !(ele2.beamline === ele.beamline)
+
+    # Empty the beamline
+    ele = LineElement()
+    bl = Beamline([ele, ele, ele])
+    @test_throws ErrorException Beamline([ele])
+    empty!(bl)
+    @test isempty(bl.line)
+    @test isnothing(ele.BeamlineParams)
+    bl2 = Beamline([ele, ele])
+    @test !isnothing(ele.BeamlineParams)
 end
 
 # A custom tracking method struct used for testing
