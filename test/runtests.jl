@@ -1697,5 +1697,24 @@ end
     # Check if the created file matches the expected
     @test test_file == expected_file
 
+    #= ------------------------------------ =#
+    # Test ApertureParams
+
+    @elements t = Drift( L = 0.25, x1_limit = 0.0, x2_limit = 1.0, y1_limit = 0.0, y2_limit = 1.0, aperture_shape = ApertureShape.Elliptical, aperture_at = ApertureAt.Entrance, aperture_shifts_with_body = true, aperture_active = true)
+    @elements beamline = Beamline( [t])
+    @elements lattice = Lattice( [beamline] )
+
+    # Create the test file
+    Beamlines.scibmad_to_pals(lattice, "test_aperture")
+    
+    # Load the test file and the expected file 
+    expected_file = YAML.load_file("test_aperture.pals.yaml")
+    test_file = YAML.load_file("test_aperture.pals.yaml")
+    
+    # Check if the created file exists
+    @test isfile("test_aperture.pals.yaml")
+    # Check if the created file matches the expected
+    @test test_file == expected_file
+
     return nothing
 end
