@@ -14,32 +14,29 @@ PALS:
         ReferenceP:
           species_ref: proton
           E_tot_ref: 70
-    - Q1ER_6:
-        kind: Quadrupole
-        length: 1.8
-        MagneticMultipoleP:
-          Kn1: -0.2291420342
     - D2ER_6:
         kind: SBend
         length: 5.50007539103
         BendP:
           e1: -0.0090688461675
           e2: -0.0090688461675
-    - HSOL5_6__2:
-        kind: Solenoid
-        length: 1.8
     - EDGE3_002__1:
         kind: Multipole
         MagneticMultipoleP:
           Kn1L: 4.78133619569e-6
+    - RF0__1:
+        kind: RFCavity
+        length: 4.01667
+        RFP:
+          voltage: 3.3210942126011e6
+          frequency: 5.9114268014977e8
     - beamline1:
         kind: Beamline
         line:
           - BEGELE1
-          - Q1ER_6
           - D2ER_6
-          - HSOL5_6__2
           - EDGE3_002__1
+          - RF0__1
     - lattice:
         kind: Lattice
         branches:
