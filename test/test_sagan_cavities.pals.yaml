@@ -60,7 +60,7 @@ PALS:
             radiation_fluctuations_on: false
         RFP:
           voltage: 2.0e9
-          zero_phase: AFTER_TRANSITION
+          zero_phase: ABOVE_TRANSITION
           frequency: 1.0e9
           L_active: 0
           num_cells: 4
