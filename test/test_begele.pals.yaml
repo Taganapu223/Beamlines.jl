@@ -24,6 +24,7 @@ PALS:
         length: 5.50007539103
         BendP:
           e1: -0.0090688461675
+          e2: -0.0090688461675
     - HSOL5_6__2:
         kind: Solenoid
         length: 1.8

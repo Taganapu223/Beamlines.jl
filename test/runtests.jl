@@ -1720,7 +1720,7 @@ end
     # Test BeginningEle representation
 
     @elements Q1ER_6 = LineElement(kind = Quadrupole, L = 1.8, Kn1 = -0.2291420342)
-    @elements D2ER_6 = LineElement(kind = SBend, L = 5.50007539103, e1 = -9.0688461675E-3)
+    @elements D2ER_6 = LineElement(kind = SBend, L = 5.50007539103, e1 = -9.0688461675E-3, e2 = -9.0688461675E-3)
     @elements HSOL5_6__2 = LineElement(kind = Solenoid, L = 1.8)
     @elements EDGE3_002__1 = LineElement(kind = Multipole, Kn1L = 4.78133619569E-6)
     @elements ring = Beamline([Q1ER_6, D2ER_6, HSOL5_6__2, EDGE3_002__1], species_ref = Species("proton"), E_ref = 70)
@@ -1728,8 +1728,8 @@ end
     # Create the test file
     Beamlines.scibmad_to_pals(Lattice( [ring] ), "test_begele")
 
-      # Load the test file and the expected file s
-    expected_file = YAML.load_file("test_begele.pals.yaml")
+    # Load the test file and the expected file
+    expected_file = YAML.load_file("test_begele_expected.pals.yaml")
     test_file = YAML.load_file("test_begele.pals.yaml")
     
     # Check if the created file exists
