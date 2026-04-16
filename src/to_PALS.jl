@@ -148,63 +148,6 @@ function params_to_dict!(format_dict::OrderedDict, parameter_group::T) where {T<
     end
 end
 
-# Handle BeamlineParams
-function params_to_dict!(format_dict::OrderedDict, parameter_group::BeamlineParams)
-    # The accumulator dictionaries
-    referencep_acc = OrderedDict()
-    refchangep_acc = OrderedDict()
-
-    # Try to add `species_ref`
-    try
-        species_ref = getproperty(parameter_group, :species_ref)
-        if (!isdefault(species_ref))
-            referencep_acc[:species_ref] = species_ref.name
-        end
-    catch
-        nothing
-    end
-
-    # Try to add `pc_ref`
-    try
-        pc_ref = getproperty(parameter_group, :pc_ref)
-        if (!isdefault(pc_ref))
-            referencep_acc[:pc_ref] = pc_ref
-        end
-    catch
-        nothing
-    end
-
-    # Try to add `E_tot_ref`
-    try
-        e_ref = getproperty(parameter_group, :E_ref)
-        if (!isdefault(e_ref))
-            referencep_acc[:E_tot_ref] = e_ref
-        end
-    catch
-        nothing
-    end
-
-    # Try to add `dE_ref`
-    try
-        de_ref = getproperty(parameter_group, :dE_ref)
-        if (!isdefault(dE_ref))
-            refchangep_acc[:dE_ref] = de_ref
-        end
-    catch
-        nothing
-    end 
-
-    if (!isdefault(referencep_acc))
-        # If `referencep_acc` is not an empty dictionary, add it to `format_dict`
-        format_dict[:ReferenceP] = referencep_acc
-    end
-
-    if (!isdefault(refchangep_acc))
-        # If `refchangep_acc` is not an empty dictionary, add it to `format_dict`
-        format_dict[:ReferenceChangeP] = refchangep_acc
-    end
-end
-
 # Handle ApertureParams
 function params_to_dict!(format_dict::OrderedDict, parameter_group::ApertureParams)
     # The accumulator dictionary 
@@ -290,7 +233,7 @@ function params_to_dict!(format_dict::OrderedDict, parameter_group::RFParams)
 
     elseif (zero_phase == PhaseReference.AboveTransition)
         # If this is after transition
-        acc[:zero_phase] = :AFTER_TRANSITION
+        acc[:zero_phase] = :ABOVE_TRANSITION
 
     end
     # Do not display if accelerating because that's a default value
@@ -313,7 +256,7 @@ function params_to_dict!(format_dict::OrderedDict, parameter_group::RFParams)
 
     # Put in "SciBmad_traveling_wave"
     if (getproperty(parameter_group, :traveling_wave))
-        acc[:cavity_type] = true
+        acc[:cavity_type] = :TRAVELING_WAVE
     end
 
     if (!isdefault(acc))
@@ -352,6 +295,11 @@ function params_to_dict!(format_dict::OrderedDict, parameter_group::BMultipolePa
         # If acc is not an empty dictionary, add it to `format_dict`
         format_dict[:MagneticMultipoleP] = acc
     end
+end
+
+# Ignore BeamlineParams (handled by `create_begele()`)
+function params_to_dict!(format_dict::OrderedDict, parameter_group::BeamlineParams)
+    nothing
 end
 
 
@@ -540,6 +488,63 @@ function pals_format(line_element::LineElement)
     return OrderedDict(line_element.name => format_dict)
 end
 
+"""
+    Internal: create_begele(beamline::Beamline, num::Integer)
+
+Returns an `OrderedDict` with a single key, "BEGELE`num`" that maps
+to a dictionary containing the parameters of the `BeginningEle` element
+that starts a branch.
+
+This function is used as a helper for `scibmad_to_pals()` for creating
+the element storing the reference parameters for a branch.
+"""
+function create_begele(beamline::Beamline, num::Integer)
+    # Create accumulator
+    outer_acc = OrderedDict()
+    outer_acc[:kind] = :BeginningEle # Do this outside constructor to avoid concrete typing
+    inner_acc = OrderedDict()
+
+    # Access species
+    try 
+        inner_acc[:species_ref] = Symbol(beamline.species_ref.name)
+    catch
+        nothing
+    end
+
+    # Access reference
+    try 
+        # If `beamline.ref` stores meaningful information
+        refsym = refmeaning_to_sym(beamline.ref_meaning)
+
+        # Change name to PALS name if necessary
+        if (refsym == :E_ref)
+            refsym = :E_tot_ref
+        end
+
+        inner_acc[refsym] = beamline.ref
+    catch
+        nothing
+    end
+
+    # Put in proper parameter group
+    if (beamline.ref_meaning == RefMeaning.dp_over_q_ref || beamline.ref_meaning == RefMeaning.dE_ref || beamline.ref_meaning == RefMeaning.dpc_ref)
+        # If this parameter is a change in something, then this is ReferenceChangeP
+
+        outer_acc[:ReferenceChangeP] = inner_acc
+    else
+        # if this parameter is not a change in a quantity, then this is ReferenceP
+
+        outer_acc[:ReferenceP] = inner_acc
+    end
+
+    # Return the BEGELE element or nothing if there's no meaningful information
+    if (!isdefault(inner_acc))
+        return OrderedDict(Symbol(string("BEGELE", num)) => outer_acc)
+    else
+        return nothing
+    end
+end
+
 
 """
     Internal: scibmad_to_pals(lattice::Lattice, new_file_name::String)
@@ -578,6 +583,16 @@ function scibmad_to_pals(lattice::Lattice, new_file_name::String)
 
         line = [] # Accumulator for what's in a beamline
 
+        # Add a beginning element to the line if meaningful
+        begele = create_begele(beamline, line_counter)
+        if (!isnothing(begele))
+            # Add the begele to the facility
+            push!(facility, create_begele(beamline, line_counter))
+            # Add the begele's name to the line
+            push!(line, collect(keys(begele))[1])
+        end
+
+        # Add the elements to the facility
         for line_element in beamline.line
             # For every element in `beamline`'s line...
 
