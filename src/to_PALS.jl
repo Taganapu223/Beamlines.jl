@@ -41,6 +41,8 @@ const SCIBMAD_NAME_TO_PALS_NAME_MAP = Dict{Symbol, Symbol}(
     :y2_limit => :y_max,
     :aperture_shape => :shape,
     :aperture_at => :location,
+    # BendP...
+    :g_ref => :g,
     # (MapParams) [No PALS group]
     :transport_map => :SciBmad_transport_map,   # *
     :transport_map_params => :SciBmad_transport_map_params,     # *
