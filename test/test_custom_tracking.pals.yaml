@@ -53,8 +53,12 @@ PALS:
           - drift_two
           - quad_two
           - drift_one
+    - masterbeamline:
+        kind: Beamline
+        line:
+          - beamline1
     - lattice:
         kind: Lattice
         branches:
-          - beamline1
+          - masterbeamline
     - use: lattice

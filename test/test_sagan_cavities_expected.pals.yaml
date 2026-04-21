@@ -68,11 +68,15 @@ PALS:
         kind: Beamline
         line:
           - sc3
-    - lattice:
-        kind: Lattice
-        branches:
+    - masterbeamline:
+        kind: Beamline
+        line:
           - beamline1
           - beamline2
           - beamline3
           - beamline4
+    - lattice:
+        kind: Lattice
+        branches:
+          - masterbeamline
     - use: lattice

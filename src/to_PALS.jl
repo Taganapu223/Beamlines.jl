@@ -299,45 +299,22 @@ function params_to_dict!(format_dict::OrderedDict, parameter_group::BMultipolePa
     end
 end
 
-# Handle BeamlineParams
+# Ignore BeamlineParams
 function params_to_dict!(format_dict::OrderedDict, parameter_group::BeamlineParams)
-    # The accumulator dictionaries
-    referencep_acc = OrderedDict()
+    nothing
+end
+
+#=
+Working on this
+
+# Handle BeamlineParams, only for ReferenceChangeP
+function params_to_dict!(format_dict::OrderedDict, parameter_group::BeamlineParams)
+    # The accumulator dictionary
     refchangep_acc = OrderedDict()
-
-    # Try to add `species_ref`
-    try
-        species_ref = getproperty(parameter_group, :species_ref)
-        if (!isdefault(species_ref))
-            referencep_acc[:species_ref] = species_ref.name
-        end
-    catch
-        nothing
-    end
-
-    # Try to add `pc_ref`
-    try
-        pc_ref = getproperty(parameter_group, :pc_ref)
-        if (!isdefault(pc_ref))
-            referencep_acc[:pc_ref] = pc_ref
-        end
-    catch
-        nothing
-    end
-
-    # Try to add `E_tot_ref`
-    try
-        e_ref = getproperty(parameter_group, :E_ref)
-        if (!isdefault(e_ref))
-            referencep_acc[:E_tot_ref] = e_ref
-        end
-    catch
-        nothing
-    end
 
     # Try to add `dE_ref`
     try
-        de_ref = getproperty(parameter_group, :dE_ref)
+        de_ref = getproperty(getproperty(parameter_group, :beamline), :rate)
         if (!isdefault(dE_ref))
             refchangep_acc[:dE_ref] = de_ref
         end
@@ -345,17 +322,12 @@ function params_to_dict!(format_dict::OrderedDict, parameter_group::BeamlinePara
         nothing
     end 
 
-    if (!isdefault(referencep_acc))
-        # If `referencep_acc` is not an empty dictionary, add it to `format_dict`
-        format_dict[:ReferenceP] = referencep_acc
-    end
-
     if (!isdefault(refchangep_acc))
         # If `refchangep_acc` is not an empty dictionary, add it to `format_dict`
         format_dict[:ReferenceChangeP] = refchangep_acc
     end
 end
-
+=#
 
 """
     Internal: pals_format(line_element::LineElement) 
@@ -458,10 +430,10 @@ function pals_format(line_element::LineElement)
     for parameter_group in values(parameter_groups)
         # Loop through every parameter group `line_element` has
 
-        if (typeof(parameter_group) == UniversalParams)
+        group_type = typeof(parameter_group)
+        if (group_type == UniversalParams)
             # These have already been handled, continue
             continue
-
         else
             # General case: Any other group of parameters
 
@@ -625,7 +597,7 @@ function scibmad_to_pals(lattice::Lattice, new_file_name::String)
     # Create a list which represents the overall construction of the particle accelerator
     facility = []
 
-    branches = [] # Accumulator for the branches of the lattice
+    subbeamlines = [] # Accumulator for the subbeamlines of the lattice
 
     line_counter = 1 # Counter used for naming BeamLines
 
@@ -702,7 +674,7 @@ function scibmad_to_pals(lattice::Lattice, new_file_name::String)
         # Name beamlines using default-namer (for now), increment the counter
         # for the namer, and push the beamline onto `facility`
         beamline_name = Symbol(string("beamline", line_counter))
-        push!(branches, beamline_name)
+        push!(subbeamlines, beamline_name)
         line_counter += 1
         push!(facility, 
             OrderedDict(
@@ -714,15 +686,28 @@ function scibmad_to_pals(lattice::Lattice, new_file_name::String)
         )
         push!(created_elements, beamline_name)
     end
+
+    # Add the master beamline
+    push!(
+        facility, 
+        OrderedDict(
+            :masterbeamline => OrderedDict(
+                :kind => :Beamline,
+                :line => subbeamlines
+            )
+        )
+    )
+
     # Push the `lattice` entry onto `facility`
     push!(facility, 
         OrderedDict(
             :lattice => OrderedDict(
                 :kind => :Lattice,
-                :branches => branches
+                :branches => [:masterbeamline]
             )
         )
     )
+
     # Push `lattice` on as the last element of the PALS file being "used"
     push!(facility, OrderedDict(:use => :lattice))
 

@@ -1697,6 +1697,7 @@ end
     # Check if the created file matches the expected
     @test test_file == expected_file
 
+
     #= ------------------------------------ =#
     # Test ApertureParams
 
@@ -1716,6 +1717,7 @@ end
     # Check if the created file matches the expected
     @test test_file == expected_file
 
+    
     #= ------------------------------------ =#
     # Test BeginningEle representation
 

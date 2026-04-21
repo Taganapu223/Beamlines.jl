@@ -23,8 +23,12 @@ PALS:
         kind: Beamline
         line:
           - patch_test
+    - masterbeamline:
+        kind: Beamline
+        line:
+          - beamline1
     - lattice:
         kind: Lattice
         branches:
-          - beamline1
+          - masterbeamline
     - use: lattice

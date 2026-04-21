@@ -38,8 +38,12 @@ PALS:
           - D2ER_6
           - EDGE3_002__1
           - RF0__1
+    - masterbeamline:
+        kind: Beamline
+        line:
+          - beamline1
     - lattice:
         kind: Lattice
         branches:
-          - beamline1
+          - masterbeamline
     - use: lattice

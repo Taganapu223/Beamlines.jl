@@ -79,8 +79,12 @@ PALS:
           - rfcavity
           - crabcavity
           - patch
+    - masterbeamline:
+        kind: Beamline
+        line:
+          - beamline1
     - lattice:
         kind: Lattice
         branches:
-          - beamline1
+          - masterbeamline
     - use: lattice
