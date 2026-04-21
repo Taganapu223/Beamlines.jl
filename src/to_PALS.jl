@@ -299,9 +299,61 @@ function params_to_dict!(format_dict::OrderedDict, parameter_group::BMultipolePa
     end
 end
 
-# Ignore BeamlineParams (handled by `create_begele()`)
+# Handle BeamlineParams
 function params_to_dict!(format_dict::OrderedDict, parameter_group::BeamlineParams)
-    nothing
+    # The accumulator dictionaries
+    referencep_acc = OrderedDict()
+    refchangep_acc = OrderedDict()
+
+    # Try to add `species_ref`
+    try
+        species_ref = getproperty(parameter_group, :species_ref)
+        if (!isdefault(species_ref))
+            referencep_acc[:species_ref] = species_ref.name
+        end
+    catch
+        nothing
+    end
+
+    # Try to add `pc_ref`
+    try
+        pc_ref = getproperty(parameter_group, :pc_ref)
+        if (!isdefault(pc_ref))
+            referencep_acc[:pc_ref] = pc_ref
+        end
+    catch
+        nothing
+    end
+
+    # Try to add `E_tot_ref`
+    try
+        e_ref = getproperty(parameter_group, :E_ref)
+        if (!isdefault(e_ref))
+            referencep_acc[:E_tot_ref] = e_ref
+        end
+    catch
+        nothing
+    end
+
+    # Try to add `dE_ref`
+    try
+        de_ref = getproperty(parameter_group, :dE_ref)
+        if (!isdefault(dE_ref))
+            refchangep_acc[:dE_ref] = de_ref
+        end
+    catch
+        nothing
+    end 
+
+    if (!isdefault(referencep_acc))
+        # If `referencep_acc` is not an empty dictionary, add it to `format_dict`
+        format_dict[:ReferenceP] = referencep_acc
+    end
+
+    if (!isdefault(refchangep_acc))
+        # If `refchangep_acc` is not an empty dictionary, add it to `format_dict`
+        format_dict[:ReferenceChangeP] = refchangep_acc
+    end
 end
 
 
@@ -699,3 +751,5 @@ end
 
 #= TODO Handle Named Beamlines =#
 #= TODO Deferred Expression =#
+#= TODO Create Master Beamline =#
+#= TODO ReferenceChangeP should show up in cavity =#
